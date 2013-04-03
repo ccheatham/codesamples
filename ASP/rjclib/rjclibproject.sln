@@ -1,0 +1,23 @@
+Microsoft Visual Studio Solution File, Format Version 1.00
+Project("{BDD4A1A1-7A1F-11D0-AC13-00A0C91E29D5}") = "iis4dev/RjcLib", "RjcLibProject.vip", "{AE1581AA-CB2A-11D2-8353-00600896D308}"
+	ProjectSection(SourceCodeControl) = preProject
+		SccAuxPath = 
+		WebServer = http://iis4dev
+		WebName = RjcLib
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(LocalDeployment) = postSolution
+		StartupProject = {AE1581AA-CB2A-11D2-8353-00600896D308}
+	EndGlobalSection
+	GlobalSection(BuildOrder) = postSolution
+		0 = {AE1581AA-CB2A-11D2-8353-00600896D308}
+	EndGlobalSection
+	GlobalSection(SourceCodeControl) = preSolution
+		SccProjectName = \u0022$/RjcLib\u0022,\u0020AYQAAAAA
+		SccAuxPath = \\\\iis4dev\\c$\\Program\u0020Files\\Microsoft\u0020Visual\u0020Studio\\Common\\VSS,
+		SccLocalPath = .
+	EndGlobalSection
+	GlobalSection(DeploymentRoot) = postSolution
+	EndGlobalSection
+EndGlobal

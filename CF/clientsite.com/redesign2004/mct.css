@@ -1,0 +1,83 @@
+table {
+	font-size:15px;
+	font-family:  trebuchet MS,Helvetica, sans-serif;
+	color:#333333;
+	
+	
+
+}
+body {margin: 0; padding: 0;
+		background: #CCCCBB url("background.gif");
+		background-repeat: no-repeat;
+		background-position: center center;
+		background-attachment: fixed;
+		font-size:12px;		
+	font-family:  trebuchet MS,Helvetica, sans-serif;}
+	
+	
+.border {border: 1px solid #8E8E87;}	
+a:link {color: #8E8C74;}
+
+a:visited {color: #999966;}
+
+a:hover, a:active {color: #716844;}
+
+P.nav {font-family: trebuchet MS, helvetica, sans-serif;
+        font-size: 12px;
+		letter-spacing: 2px;
+        text-indent: 0em;
+        text-align: center;
+		font-weight: bold
+       }
+P.copyright {font-family: verdana, helvetica, sans-serif;
+        font-size: 9px;
+		text-indent: 0em;
+	    text-align: center;
+		color: #666;
+		font-weight: none;
+       }	   
+P {font-family: trebuchet MS, helvetica, sans-serif;
+        font-size: 12px;
+		
+		line-height: 150%;
+       text-align: left;
+		color: #333333;
+       }
+.form {font-family: trebuchet MS, helvetica, sans-serif;
+        font-size: 12px;
+		text-indent: 0em;
+       text-align: left;		
+       }	   
+
+.title {font-family: trebuchet MS, helvetica, sans-serif;
+        font-size: 24px;
+		letter-spacing: 2px;
+		text-indent: 0em;
+       text-align: left;	
+	   font-weight: bold;
+	   color: #666666;	
+       }	  
+.address {font-family: trebuchet MS, helvetica, sans-serif;
+        font-size: 12px;
+		text-indent: 0em;
+   
+	   text-align: center;
+	   color: #000000;	
+       }		   
+.input {
+	font-family: trebuchet MS, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background: #CCCCBB url("input_background.gif");
+	background-repeat: no-repeat;
+	color: #333333;	
+	border: 1px solid #666;
+}	   
+	   
+a:link.stuff, a:visited.stuff {color: #8E8C74;
+padding: 3px 0;
+text-decoration:none;}
+a:hover.stuff, a:active.stuff {color: #716844;
+border-top: 1px solid #ACACA2;
+border-bottom: 1px solid #ACACA2;
+padding: 2px 0;
+text-decoration:none;}

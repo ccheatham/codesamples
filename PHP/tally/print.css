@@ -1,0 +1,109 @@
+/* CSS Document */
+body {padding: 0;
+	margin: 0;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 7pt;
+	color: #000;}
+input {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+
+#container img {display: none;}
+
+#remove {display: none;}
+
+.orgDetails {display: none;}
+
+#logout {display: none;}
+
+#removePrint {display: none;}
+
+.doNotPrint {display: none;}
+
+select {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;}
+
+	
+h1 {padding-left: 20px;
+	font-size: 14pt;
+	color: #000;}
+	
+h1 span {color: #000;
+	font-size: 75%;}
+	
+a:link, a:visited {color: #000;
+	text-decoration: none;}
+a:active, a:hover {color: #000;}
+	
+fieldset {width: 400px;
+	border: 1px solid #000;
+	margin: 30px;}
+	
+legend {border: 1px solid #000;
+	background-color: #000;
+	padding: 4px;
+	font-family: Arial, Helvetica, sans-serif;
+	size: 12pt;
+	font-weight: bold;}
+	
+p {padding-left:20px;
+	margin: 0;}
+
+#container {background-color: #fff;}
+
+#content {border: 1px solid #000;
+	margin: 20px;
+	padding: 0;}
+	
+#content p {padding: 0;
+	margin: 0;
+	padding: 4px 6px;}
+	
+#content td {border-right: 1px solid #000;
+	border-bottom: 1px solid #000;}
+
+.content {border: 1px solid #000;
+	margin: 20px;
+	padding: 0;}
+	
+.content td {border-right: 1px solid #000;
+	border-bottom: 1px solid #000;}
+	
+.orderFill {border: 1px solid #000;
+	margin: 20px;
+	padding: 0;}
+	
+.orderFill p {padding: 0;
+	margin: 0;
+	padding: 4px 6px;}
+	
+.orderFill td {border-right: 1px solid #000;
+	border-bottom: 1px solid #000;}
+	
+.topBar p {font-weight: bold;}
+
+#bottombar {font-weight: bold;}
+
+.orgDetails td {padding-top: 10px;}
+
+.background {font-weight: bold;}
+	
+.background2 {background-color: #000;
+	font-weight: bold;}
+
+.prodA {background-color: #ddd;}
+.prodB {background-color: #ccc;}
+.prodC {background-color: #bbb;}
+.prodD {background-color: #aaa;}
+.prodE {background-color: #999;}
+.prodF {background-color: #888;}
+
+.prodNumb p {font-weight: bold;}
+
+#logout {padding-right: 35px;}
+
+h1 span.sub {font-size:7pt;
+	color: #000;
+	font-weight:normal;}

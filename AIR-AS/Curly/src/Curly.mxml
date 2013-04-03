@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   creationComplete="init()"
+					   backgroundColor="#9A9A9A" width="500" height="375" skinClass="skins.curlyAppSkin">
+	<fx:Script source="/include/symbolImport.as"/>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.fileBorderContainer	
+		{
+			fontSize: 10;
+			font-weight:bold;
+			color: #FFFFFF;
+			border-visible:true;
+			border-weight:1;
+			border-color:#333333;
+			corner-radius:3;
+		}
+		.darkText
+		{
+			fontSize: 10;
+			font-weight:normal;
+			color: #000000;
+		}
+		
+		.lightText
+		{
+			fontSize: 10;
+			font-weight:normal;
+			color: #FFFFFF;
+		}
+		
+		.progressBar
+		{
+			track-height: 4;
+			bar-skin: Embed(source='assets/CurlySkins.swf', symbol='ProgressBar_barSkin');
+			fontSize: 10;
+			font-weight:bold;
+		}
+	</fx:Style>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import air.net.URLMonitor;
+			import air.update.ApplicationUpdater;
+			import air.update.events.StatusUpdateErrorEvent;
+			import air.update.events.StatusUpdateEvent;
+			
+			import com.pimsol.components.FileContainer;
+			import com.pimsol.thirdparty.UploadFile;
+			
+			import flash.net.URLLoader;
+			import flash.net.URLRequest;
+			import flash.net.URLRequestDefaults;
+			import flash.net.URLRequestMethod;
+			import flash.net.URLVariables;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.ProgressBar;
+			import mx.controls.ProgressBarMode;
+			import mx.events.CloseEvent;
+			import mx.events.DynamicEvent;
+			import mx.graphics.SolidColor;
+			
+			import spark.components.BorderContainer;
+			import spark.components.Button;
+			import spark.components.Label;
+			import spark.events.DropDownEvent;
+			import spark.events.IndexChangeEvent;
+			
+			private var sqlConn:SQLConnection;
+			private var settingDBFile:File;
+			
+			[Bindable]
+			private var webMonText:String;
+			
+			[Bindable]
+			private var uploadChunkSize:int;
+			
+			[Bindable]
+			private var _plainUploadURL:String;
+			
+			[Bindable]
+			private var uploadURL:String;
+			
+			[Bindable]
+			private var monitorURL:String;
+			
+			[Bindable]
+			private var doctypeURL:String;
+			
+			[Bindable]
+			private var document_type_id:String;
+			
+			[Bindable]
+			private var aChunkSizes:ArrayCollection;
+			
+			[Bindable]
+			private var aUploadUrls:ArrayCollection;
+			
+			[Bindable]
+			private var appVersion:String;
+			
+			private var appUpdater:ApplicationUpdater;
+			
+			[Bindable]
+			private var webServer:URLMonitor;
+			
+			[Bindable]
+			private var _imageStatus:Class;
+			
+			[Bindable]
+			private var docTypes:ArrayCollection;
+			
+
+			protected function blockArtifactImage_doubleClickHandler(event:MouseEvent):void
+			{
+				applicationSettings.setVisible(true);
+			}
+
+		]]>
+	</fx:Script>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;
+			import mx.collections.XMLListCollection;
+			import com.events.UploadCompleteEvent;
+			import com.events.UploadFailedEvent;
+			import com.events.UploadCancelledEvent;
+			
+			private function init():void
+			{
+
+				//prep windowed app for taking files
+				this.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,onDragIn);
+				this.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,onDrop);
+				
+				this.nativeApplication.addEventListener(KeyboardEvent.KEY_DOWN,keyboardHandler);
+				
+				//set up sql connection for application settings
+				settingDBFile = new File("app:/curlySettings.db");
+				sqlConn = new SQLConnection();
+				sqlConn.open(settingDBFile);
+				
+				//gets URL & chunk config from SQLite DB
+				runChunkSizeQuery();
+				runURLQuery();
+				
+				appVersion = getAppVersion();
+				
+				//runs the url monitor to see if we are up
+				checkConnectivity();
+				
+				//get the doc types
+				loadDoctypes();
+				
+				//setup updater
+				initUpdater();
+				
+				//image and text setup for status bar
+				this._imageStatus = imageConnecting as Class;
+				this.webMonText = "Connecting to " + plainUploadURL;
+			}
+			
+			public function get plainUploadURL():String
+			{
+				return uploadURL.slice(0,uploadURL.indexOf('/',10));
+			}
+
+			
+			protected function initUpdater():void
+			{
+				//Application Update setup
+				appUpdater = new ApplicationUpdater();
+				appUpdater.addEventListener(StatusUpdateEvent.UPDATE_STATUS,handleApplicationUpdateStatus);
+				appUpdater.configurationFile = new File("app:/updateConfig.xml");
+				appUpdater.initialize();
+			}
+			
+			protected function loadDoctypesCompleteHandler( event : Event ) : void {
+				
+				var result:XMLDocument = new XMLDocument(event.currentTarget.data);
+				var decoder:SimpleXMLDecoder = new SimpleXMLDecoder(true);
+				var resObj:Object = decoder.decodeXML(result);
+				var docTypes:ArrayCollection = resObj.recs.rec as ArrayCollection;
+				
+				//docTypes = tempAc.getItemAt(0) as ArrayCollection;
+				cbDocTypes.dataProvider=docTypes;
+				cbDocTypes.selectedIndex=(cbDocTypes.dataProvider.length-1);
+			}
+			
+			
+			protected function loadDoctypes() : void {
+				
+				var loader:URLLoader = new URLLoader( );
+				loader.addEventListener( Event.COMPLETE, loadDoctypesCompleteHandler );
+				//loader.addEventListener( IOErrorEvent.IO_ERROR, ioErrorHandler );
+				//loader.addEventListener( ProgressEvent.PROGRESS, progressHandler );
+				//loader.addEventListener( SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler );
+				//loader.addEventListener( HTTPStatusEvent.HTTP_STATUS, httpStatusHandler );
+				var request:URLRequest = new URLRequest( doctypeURL );
+				loader.load(request);
+				
+			}
+			
+			
+			
+			
+			protected function checkConnectivity():void
+			{
+				webServer = new URLMonitor(new URLRequest(monitorURL));
+				webServer.pollInterval = 10000;
+				webServer.addEventListener(StatusEvent.STATUS,handleWebServerStatus);
+				webServer.start();
+				
+			}
+			
+			protected function handleWebServerStatus(event:StatusEvent):void
+			{	
+				if(webServer.available)
+				{
+					this.webMonText = "Connected to " + plainUploadURL;
+					this._imageStatus = imageConnected as Class;
+				}
+				else
+				{
+					this.webMonText = "Disconnected from " + plainUploadURL;
+					this._imageStatus = imageDisconnected as Class;
+				}
+			}
+			
+			protected function handleApplicationUpdateStatus(event:StatusUpdateEvent):void
+			{
+				//stops an immediate automatic update
+				event.preventDefault();
+				
+				if (event.available) {
+					Alert.okLabel = "Update";
+					Alert.buttonWidth = 80;
+					var def:XML = (event.target as ApplicationUpdater).updateDescriptor;
+					var defName:Namespace = def.namespace("pimsol");
+					var required:String = def.defName::required;
+					//var releaseNotes:String = getUpdateReleaseNotes(event.details);
+					if (required == "true") {
+						Alert.show("A new version (" + event.version + ") has been found and will be installed automatically", "Compulsory update: " + event.version, Alert.OK, null, updateAlertHandler);
+						return;
+					}
+					var alert:Alert = Alert.show("A new version (" + event.version + ") has been found, do you want to install it?\n"  + event.details ,
+						"Update available: " + event.version,
+						Alert.OK | Alert.CANCEL,null, updateAlertHandler);
+					
+					Alert.okLabel = "OK";
+				}
+				else
+				{
+					Alert.show("No updates available.");
+				}
+				
+			}
+			
+			protected function updateAlertHandler(event:CloseEvent):void
+			{
+				if(event.detail == 4)
+					appUpdater.downloadUpdate();
+				
+				initUpdater();
+			}
+			
+			protected function handleApplicationUpdateError(event:StatusUpdateErrorEvent):void
+			{
+				Alert.show("Update Error " + event.errorID);
+			}
+			
+			protected function runChunkSizeQuery():void
+			{
+				//retrieve initial settings from the local database
+				var sqlStatement:SQLStatement = new SQLStatement();
+				sqlStatement.sqlConnection = sqlConn;
+				sqlStatement.text = "select * from file_chunk_size";
+				sqlStatement.execute();
+				var sqlResult:SQLResult = sqlStatement.getResult();
+				aChunkSizes = new ArrayCollection(sqlResult.data);
+				
+				for(var i:int = 0; i < aChunkSizes.length; i++)
+				{
+					// look for active chunk size
+					if (aChunkSizes[i].active == 1)
+					{
+						uploadChunkSize = aChunkSizes[i].bytes
+						cbChunkSize.selectedIndex = i;
+					}
+				}			
+			}
+			
+			protected function runURLQuery():void
+			{				
+				//retrieve initial settings from the local database
+				var sqlStatement:SQLStatement = new SQLStatement();
+				sqlStatement.sqlConnection = sqlConn;
+				sqlStatement.text = "select * from upload_url";
+				sqlStatement.execute();
+				var sqlResult:SQLResult = sqlStatement.getResult();
+				aUploadUrls = new ArrayCollection(sqlResult.data);
+				
+				for(var i:int = 0; i < aUploadUrls.length; i++)
+				{
+					// look for active chunk size
+					if (aUploadUrls[i].active == 1)
+					{
+						uploadURL = aUploadUrls[i].url;
+						monitorURL = aUploadUrls[i].monitor_url;
+						doctypeURL = aUploadUrls[i].doctype_url;
+						cbUploadUrl.selectedIndex = i;
+					}
+				}
+			}
+			
+			protected function keyboardHandler(event:KeyboardEvent):void
+			{
+				
+				//Ctrl + k (107) functionlality to launch application settings
+				if(event.ctrlKey && event.charCode == 107)
+				{
+					if(applicationSettings.visible == false)
+					{
+						applicationSettings.setVisible(true);
+					}
+						
+					else
+					{
+						applicationSettings.setVisible(false);
+					}
+				}
+				
+				//Ctrl + a (97) functionlality to launch about
+				if(event.ctrlKey && event.charCode == 97)
+				{
+					if(aboutWindow.visible == false)
+					{
+						aboutWindow.setVisible(true);
+					}
+						
+					else
+					{
+						aboutWindow.setVisible(false);
+					}
+				}
+				
+				//Ctrl + u (117) functionlality check for an application update
+				if(event.ctrlKey && event.charCode == 117)
+				{
+					appUpdater.checkNow();
+				}
+			}			
+			
+			public function onDragIn(event:NativeDragEvent):void{
+				NativeDragManager.acceptDragDrop(this);
+			}
+			
+			/* this fucntion provides a recursive method to root out all files from a directory structure */
+			private function buildFileListFromDirectory(directory:File,fileCollection:ArrayCollection):ArrayCollection
+			{
+				var list:Array = directory.getDirectoryListing();
+				for (var i:uint = 0; i < list.length; i++) {
+					
+					var thisFile:File = File(list[i])
+					
+					if(thisFile.isDirectory)
+					{
+						buildFileListFromDirectory(thisFile,fileCollection);
+					}
+					else
+					{
+						fileCollection.addItem(thisFile);
+					}
+				}
+				return fileCollection;
+			}
+		
+			public function onDrop(event:NativeDragEvent):void{
+				NativeDragManager.dropAction = NativeDragActions.COPY;
+				var dropfiles:Object = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT,"originalPreferred"); 
+				var fileCollection:ArrayCollection = new ArrayCollection();
+				for each (var file:File in dropfiles){
+					if(!file.isDirectory)
+					{
+						fileCollection.addItem(file);
+					}
+					else
+					{
+						/* this glues two array collections together**one of which is the result of a directory dig*/
+						fileCollection = new ArrayCollection(fileCollection.toArray().concat(buildFileListFromDirectory(file,fileCollection).toArray()));
+					}
+				}
+				uploadFiles(fileCollection);
+			}		
+			
+			protected function uploadFiles(fileCollection:ArrayCollection):void
+			{
+				
+				for each (var file:File in fileCollection){
+					var ul:UploadFile = new UploadFile(uploadURL,file,cbDocTypes.dataProvider.getItemAt(cbDocTypes.selectedIndex).type_id);	
+					ul.chunkSize = uploadChunkSize;
+					
+					ul.addEventListener(UploadCompleteEvent.UPLOAD_COMPLETE, handleUploadComplete);
+					ul.addEventListener(UploadFailedEvent.UPLOAD_FAILED, handleFailureErrors);
+					ul.addEventListener(UploadCancelledEvent.UPLOAD_CANCELLED, handleUploadCancelled);
+					
+					var fileUploadProgressBar:ProgressBar = new ProgressBar();
+					fileUploadProgressBar.bottom = 0;
+					fileUploadProgressBar.left = 5;
+					fileUploadProgressBar.right = 5;
+					fileUploadProgressBar.styleName = "progressBar";
+					fileUploadProgressBar.source = ul;
+					fileUploadProgressBar.labelPlacement = "right";
+					fileUploadProgressBar.mode = ProgressBarMode.POLLED;
+					fileUploadProgressBar.width = filesGroup.width;
+				
+					var fbc:FileContainer = new FileContainer();
+					fbc.file = file;
+					fbc.type = "loading";
+					fbc.width = filesGroup.width -5			
+					fbc.create();
+					fbc.addElement(fileUploadProgressBar);
+					filesGroup.addElement(fbc);
+					ul.load();
+				}
+			}
+
+			protected function handleUploadCancelled(event:UploadCancelledEvent):void
+			{			
+
+				for (var i:uint = 0; i < filesGroup.numChildren; i++){
+					var thisFileContainer:FileContainer = FileContainer(filesGroup.getChildAt(i));
+					if(thisFileContainer.file == event.uploadFile.file)
+					{
+						var thisFile:File = File(event.currentTarget.file);
+						var p:uint = this.filesGroup.getChildIndex(thisFileContainer);
+						
+						//thisProgressbar.removeEventListener(ProgressEvent.PROGRESS,progressHandler);
+						this.filesGroup.removeElement(thisFileContainer);
+						
+						var fbc:FileContainer = new FileContainer();
+						fbc.file = thisFile;
+						fbc.type = "cancelled";
+						fbc.message = event.uploadFile.fileHash; 
+						fbc.width = filesGroup.width -5;
+						fbc.addEventListener('close',closeBtnHandler);						
+						fbc.create();
+						this.filesGroup.addElementAt(fbc,i); 
+					}
+				}
+			}
+			
+			protected function handleFailureErrors(event:UploadFailedEvent):void
+			{			
+				for (var i:uint = 0; i < filesGroup.numChildren; i++){
+					var thisFileContainer:FileContainer = FileContainer(filesGroup.getChildAt(i));
+					var thisFile:File = File(thisFileContainer.file);
+					if(thisFile == event.uploadFile.file)
+					{
+						this.filesGroup.removeElement(thisFileContainer);
+
+						var fbc:FileContainer = new FileContainer();
+						fbc.file = thisFile;
+						fbc.type = "incomplete";
+						fbc.width = filesGroup.width -5
+						fbc.addEventListener('retry',retryBtnHandler);
+						fbc.addEventListener('close',closeBtnHandler);						
+						fbc.create();
+						this.filesGroup.addElementAt(fbc,i); 
+					}
+				}
+			}
+			
+			protected function handleUploadComplete(event:UploadCompleteEvent):void
+			{	
+				for (var i:uint = 0; i < filesGroup.numChildren; i++){
+					var thisFileContainer:FileContainer = FileContainer(filesGroup.getChildAt(i));
+					var thisFile:File = File(thisFileContainer.file);
+					if(thisFile == event.uploadFile.file)
+					{
+						this.filesGroup.removeElement(thisFileContainer);
+						
+						var fbc:FileContainer = new FileContainer();
+						fbc.file = thisFile;
+						fbc.type = "complete";
+						fbc.message = event.uploadFile.fileHash;
+						fbc.width = filesGroup.width -5;
+						fbc.addEventListener("close",closeBtnHandler);
+						fbc.create();
+						this.filesGroup.addElementAt(fbc,i);
+					}
+				}
+			}
+			
+			protected function closeBtnHandler(event:MouseEvent):void
+			{
+				var thisFileContainer:FileContainer = FileContainer(event.currentTarget);
+				thisFileContainer.removeEventListener("close",closeBtnHandler);
+				thisFileContainer.removeEventListener("retry",retryBtnHandler);
+				this.filesGroup.removeElement(thisFileContainer);
+			}
+			
+			protected function retryBtnHandler(event:MouseEvent):void
+			{
+				
+				
+				var thisFileContainer:FileContainer = FileContainer(event.currentTarget);
+				var file:File = thisFileContainer.file;
+				
+				var p:uint = this.filesGroup.getChildIndex(thisFileContainer);
+				thisFileContainer.removeEventListener("close",closeBtnHandler);
+				thisFileContainer.removeEventListener("retry",retryBtnHandler);
+				this.filesGroup.removeElement(thisFileContainer);
+				
+				
+				
+				var ul:UploadFile = new UploadFile(uploadURL,file,cbDocTypes.dataProvider.getItemAt(cbDocTypes.selectedIndex).type_id);	
+				ul.chunkSize = uploadChunkSize;
+				
+				ul.addEventListener(UploadCompleteEvent.UPLOAD_COMPLETE, handleUploadComplete);
+				ul.addEventListener(UploadFailedEvent.UPLOAD_FAILED, handleFailureErrors);
+				ul.addEventListener(UploadCancelledEvent.UPLOAD_CANCELLED, handleUploadCancelled);
+				
+				var fileUploadProgressBar:ProgressBar = new ProgressBar();
+				fileUploadProgressBar.bottom = 0;
+				fileUploadProgressBar.left = 5;
+				fileUploadProgressBar.right = 5;
+				fileUploadProgressBar.styleName = "progressBar";
+				fileUploadProgressBar.source = ul;
+				fileUploadProgressBar.labelPlacement = "right";
+				fileUploadProgressBar.mode = ProgressBarMode.POLLED;
+				fileUploadProgressBar.width = filesGroup.width;
+				
+				var fbc:FileContainer = new FileContainer();
+				fbc.file = file;
+				fbc.type = "loading";
+				fbc.width = filesGroup.width -5			
+				fbc.create();
+				fbc.addElement(fileUploadProgressBar);
+				filesGroup.addElementAt(fbc,p);
+				ul.load();		
+			}
+			
+			protected function _closeHandler(event:CloseEvent):void
+			{
+				event.currentTarget.setVisible(false);
+			}
+			
+			protected function handleSettingUpdate(event:SQLEvent):void
+			{
+				Alert.show("Setting Saved");
+			}
+			
+			protected function handleSettingUpdateError(event:SQLErrorEvent):void
+			{
+				Alert.show("Setting could not be saved");
+			}
+			
+			protected function cbChunkSize_changeHandler(event:IndexChangeEvent):void
+			{
+				var oldRowId:int = cbChunkSize.dataProvider.getItemAt(event.oldIndex).id;
+				var sqlStatement:SQLStatement = new SQLStatement();
+				sqlStatement.sqlConnection = sqlConn;
+				sqlStatement.text = "update file_chunk_size set active = 0 where id =" + oldRowId;
+				sqlStatement.execute();
+			}
+			
+			protected function cbChunkSize_closeHandler(event:DropDownEvent):void
+			{
+				
+				var newRowId:int = cbChunkSize.dataProvider.getItemAt(event.target.selectedIndex).id;
+				uploadChunkSize = cbChunkSize.dataProvider.getItemAt(event.target.selectedIndex).bytes;
+				var sqlStatement:SQLStatement = new SQLStatement();
+				sqlStatement.sqlConnection = sqlConn;
+				sqlStatement.addEventListener(SQLEvent.RESULT,handleSettingUpdate);
+				sqlStatement.addEventListener(SQLErrorEvent.ERROR,handleSettingUpdateError);
+				sqlStatement.text = "update file_chunk_size set active = 1 where id =" + newRowId;
+				sqlStatement.execute();
+			}
+			
+			protected function cbUploadUrl_closeHandler(event:DropDownEvent):void
+			{
+				var newRowId:int = cbUploadUrl.dataProvider.getItemAt(event.target.selectedIndex).id;
+				uploadURL = cbUploadUrl.dataProvider.getItemAt(event.target.selectedIndex).url;
+				monitorURL = cbUploadUrl.dataProvider.getItemAt(event.target.selectedIndex).monitor_url;
+				doctypeURL = cbUploadUrl.dataProvider.getItemAt(event.target.selectedIndex).doctype_url;
+				var sqlStatement:SQLStatement = new SQLStatement();
+				sqlStatement.sqlConnection = sqlConn;
+				sqlStatement.addEventListener(SQLEvent.RESULT,handleSettingUpdate);
+				sqlStatement.addEventListener(SQLErrorEvent.ERROR,handleSettingUpdateError);
+				sqlStatement.text = "update upload_url set active = 1 where id =" + newRowId;
+				sqlStatement.execute();
+				checkConnectivity();
+				loadDoctypes();
+			}
+			
+			protected function cbUploadUrl_changeHandler(event:IndexChangeEvent):void
+			{
+				var oldRowId:int = cbUploadUrl.dataProvider.getItemAt(event.oldIndex).id;
+				var sqlStatement:SQLStatement = new SQLStatement();
+				sqlStatement.sqlConnection = sqlConn;
+				sqlStatement.text = "update upload_url set active = 0 where id =" + oldRowId;
+				sqlStatement.execute();
+			}
+			
+			private function getAppVersion():String {
+				var appXml:XML = NativeApplication.nativeApplication.applicationDescriptor;
+				var ns:Namespace = appXml.namespace();
+				var appVersion:String = appXml.ns::version[0];
+				return 'v' + appVersion;
+			}
+			
+			protected function btnChkForUpdate_clickHandler(event:MouseEvent):void
+			{
+				appUpdater.checkNow();
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:Scroller id="scrllr"
+				focusEnabled="false"
+				hasFocusableChildren="true"
+				top="0" bottom="20" left="5"
+				verticalScrollPolicy="on">
+		<s:VGroup id="filesGroup" width="{this.width-20}" gap="2" top="2">
+		</s:VGroup>
+	</s:Scroller>	
+	
+	<!--Custom Status Bar-->
+	<s:BorderContainer id="thisStatsuBar" backgroundColor="0xB3B3B3"  bottom="0" height="20" borderVisible="false" width="{this.width}">
+		<s:ComboBox id="cbDocTypes" labelField="type_name" focusAlpha="0" styleName="darkText" width="200" bottom="2"/>
+		<s:Label text="{this.webMonText}" styleName="lightText" verticalCenter="0" right="30" />
+		<mx:Image id="blockArtifactImage" source="{_imageStatus}" right="5"  verticalCenter="0" toolTip="{this.webMonText}" width="12" height="12" doubleClickEnabled="true" doubleClick="blockArtifactImage_doubleClickHandler(event)"/>
+	</s:BorderContainer>
+	
+	<!--Title window represents the window you get when you press Ctl + k-->
+	<s:TitleWindow id="applicationSettings" horizontalCenter="0" verticalCenter="0" width="440" height="200" visible="false" close="_closeHandler(event)" title="Application Settings">
+		<mx:Form x="10" y="10" width="420" height="100">
+			<mx:FormItem label="Upload URL:">
+				<s:ComboBox id="cbUploadUrl" dataProvider="{aUploadUrls}"  labelField="label" close="cbUploadUrl_closeHandler(event)"   change="cbUploadUrl_changeHandler(event)" focusAlpha="0" width="200"/>
+			</mx:FormItem>
+			<mx:FormItem label="Upload Chunk Size:">
+				<s:ComboBox id="cbChunkSize" dataProvider="{aChunkSizes}"  labelField="label" close="cbChunkSize_closeHandler(event)"   change="cbChunkSize_changeHandler(event)" focusAlpha="0"/>
+			</mx:FormItem>
+		</mx:Form>
+	</s:TitleWindow>
+	<s:TitleWindow id="aboutWindow" horizontalCenter="0" verticalCenter="0" width="440" height="300" visible="false" close="_closeHandler(event)" styleName="darkText" title="{appVersion}">
+		<mx:Form x="10" y="10" >
+			<s:TextArea id="aboutTextDescription"  width="380" text="Curly is a custom tool for managing different aspects of the Electronic Aircraft Qualification Management System"/>	
+		</mx:Form>
+		<s:Button id="btnChkForUpdate" click="btnChkForUpdate_clickHandler(event)"  horizontalCenter="0" label="Check for Updates" bottom="10"/>
+	</s:TitleWindow>
+
+</s:WindowedApplication>

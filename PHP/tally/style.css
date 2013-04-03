@@ -1,0 +1,106 @@
+/* CSS Document */
+body {background-image: url(../images/blueboxgradient.jpg);
+	padding: 0;
+	margin: 0;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 7pt;
+	color: #333;}
+input {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+
+select {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+	
+h1 {padding-left: 20px;
+	font-size: 14pt;
+	color: #519DD1;}
+	
+h1 span {color: #333;
+	font-size: 75%;}
+	
+a:link, a:visited {color: #2375A5;
+	text-decoration: none;}
+a:active, a:hover {color: #F5A026;}
+	
+fieldset {width: 400px;
+	border: 1px solid #000;
+	margin: 30px;}
+	
+legend {border: 1px solid #000;
+	background-color: #FFCC01;
+	padding: 4px;
+	font-family: Arial, Helvetica, sans-serif;
+	size: 12pt;
+	font-weight: bold;}
+	
+p {padding-left:20px;
+	margin: 0;}
+
+#container {background-color: #fff;}
+
+#content {border: 1px solid #000;
+	margin: 20px;
+	padding: 0;}
+	
+#content p {padding: 0;
+	margin: 0;
+	padding: 4px 6px;}
+	
+#content td {border-right: 1px solid #ccc;
+	border-bottom: 1px solid #ccc;}
+
+.content {border: 1px solid #000;
+	margin: 20px;
+	padding: 0;}
+	
+.content p {padding: 0;
+	margin: 0;
+	padding: 4px 6px;}
+	
+.content td {border-right: 1px solid #ccc;
+	border-bottom: 1px solid #ccc;}
+	
+.orderFill {border: 1px solid #000;
+	margin: 20px;
+	padding: 0;}
+	
+.orderFill p {padding: 0;
+	margin: 0;
+	padding: 4px 6px;}
+	
+.orderFill td {border-right: 1px solid #ccc;
+	border-bottom: 1px solid #ccc;}
+	
+.topBar p {font-weight: bold;}
+
+#bottombar {background: url(images/pattern.gif);
+	font-weight: bold;}
+
+.orgDetails td {padding-top: 10px;}
+
+.background {background: url(images/pattern.gif);
+	font-weight: bold;}
+	
+.background2 {background-color: #ccc;
+	font-weight: bold;}
+
+.prodA {background-color: #E37913;}
+.prodB {background-color: #3C90CC;}
+.prodC {background-color: #E3A512;}
+.prodD {background-color: #1FB554;}
+.prodE {background-color: #C15211;}
+.prodF {background-color: #ECDA12;}
+
+.prodNumb {background: url(images/pattern.gif);}
+
+.prodNumb p {font-weight: bold;}
+
+#logout {padding-right: 35px;}
+
+h1 span.sub {font-size:7pt;
+	color: #888888;
+	font-weight:normal;}

@@ -1,0 +1,9 @@
+
+
+
+RewriteEngine on
+
+RewriteCond %{HTTP_HOST} ^tally.spirit-of-america.com$ [OR]
+RewriteCond %{HTTP_HOST} ^www.tally.spirit-of-america.com$
+RewriteRule ^(.*)$ http://spirit-of-america.com/tally/$1 [R=301,L]
+

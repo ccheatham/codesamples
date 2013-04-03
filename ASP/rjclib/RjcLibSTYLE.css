@@ -1,0 +1,115 @@
+<html>
+<style type="text/css">
+BODY
+{
+    FONT: 8pt "Arial"
+}
+P
+{
+    COLOR: #260751;
+    FONT: 8pt/10pt "Arial"
+}
+H1
+{
+    COLOR: #007066;
+    FONT: bolder 17pt/19pt "Verdana, Arial, Helvetica"
+}
+H2
+{
+    COLOR: #007066;
+    FONT: bold 15pt/17pt "Verdana, Arial, Helvetica"
+}
+H3
+{
+    COLOR: #007066;
+    FONT-FAMILY: Arial Narrow;
+    FONT-SIZE: 14pt;
+    FONT-WEIGHT: bolder;
+    LINE-HEIGHT: 16pt
+}
+H4
+{
+    COLOR: #260751;
+    FONT: bold 12pt/14pt "Verdana, Arial, Helvetica"
+}
+H5
+{
+    COLOR: #007066;
+    FONT-FAMILY: Verdana, Arial, Helvetica;
+    FONT-SIZE: 10pt;
+    FONT-STYLE: normal;
+    LINE-HEIGHT: 12pt
+}
+H6
+{
+    COLOR: orangered;
+    FONT-FAMILY: Verdana, Arial, Helvetica;
+    FONT-SIZE: 10pt;
+    LINE-HEIGHT: 12pt
+}
+A
+{
+    COLOR: #006e66;
+    FONT-FAMILY: Arial;
+    FONT-SIZE: 7pt;
+    LINE-HEIGHT: 10pt;
+    TEXT-DECORATION: none
+}
+A
+{
+    COLOR: red;
+    FONT: 8pt/10pt "Arial, Helvetica"
+}
+DT
+{
+    COLOR: #260751;
+    FONT: bold 12pt/14pt "Verdana, Arial, Helvetica"
+}
+DD
+{
+    COLOR: black;
+    FONT: 10pt/12pt "Verdana"
+}
+LI
+{
+    COLOR: #260751;
+    FONT: 10pt/12pt "Verdana, Arial, Helvetica"
+}
+TD
+{
+    COLOR: black;
+    FONT-FAMILY: Arial;
+    FONT-SIZE: 8pt
+}
+A:active
+{
+    COLOR: red
+}
+A:link
+{
+    COLOR: #007066
+}
+A:visited
+{
+    COLOR: #007066
+}
+HR
+{
+    COLOR: #007066;
+    HEIGHT: 1pt
+}
+TH
+{
+    COLOR: #007066;
+    FONT-FAMILY: Arial;
+    FONT-SIZE: 8pt;
+    TEXT-DECORATION: none
+}
+</style>
+<body>
+</body>
+</html>
+
+<!----Use this in code (between HEAD tags) to utilize style sheet:
+<link REL="STYLESHEET" HREF="StyleSheet.css" TYPE="text/css">
+----!>
